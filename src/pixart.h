@@ -149,6 +149,8 @@ struct pixart_config {
     int  pointer_inertia_tick_ms;    /* timer interval ms (default 16) */
     int  pointer_flick_threshold;    /* avg raw delta/sample to detect flick (default 8) */
     int  pointer_flick_boost;        /* velocity multiplier *256 on flick (default 512=2x) */
+    /* 2-sample accumulation: halves HID report rate (written for 250Hz polling) */
+    bool no_sample_accumulation;     /* skip pairing; report every sample (default false) */
     /* IIR filter for motion noise reduction (fixed-point *1024) */
     int  iir_filter_alpha;           /* filter coefficient (0-1024, default 614 ≈ 0.6) */
     /* Speed-based CPI: dynamically adjust CPI based on movement speed */

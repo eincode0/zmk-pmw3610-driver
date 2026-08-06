@@ -233,6 +233,18 @@ properties:
       [layer, key_up, key_down, key_left, key_right, tick_override, use_remainder, no_diagonal, one_shot]
       zmk_keymap_layer_active() で判定するため最高レイヤーでなくても一致する。
       例: MOUSE レイヤー（4）で &arrows_alt 3 を保持中にレイヤー3のプロファイルを使う。
+  no-sample-accumulation:
+    type: boolean
+    description: |
+      2サンプル蓄積を無効化し、センサーのサンプルごとに HID レポートを送出する。
+      蓄積処理は POLLING_RATE_250 (Kconfig 既定) を 125Hz レポートへ落とすために
+      書かれたもので、POLLING_RATE_125 と併用すると 62.5Hz (16ms) まで二重に半減し、
+      60Hz ディスプレイ (16.67ms) とのうなりでカーソルが周期的に凍る。
+      本プロパティを立てるとセンサーのポーリングレート・消費電流は据え置きのまま、
+      レポート周期だけが 1/2 (125Hz 運用で 8ms) に戻る。増えるのは HID 通知頻度のみ。
+      注意: 1レポートあたりの delta が半減するため、iir-filter-alpha の切り捨て損失が
+      相対的に大きくなる。本プロパティと併せて alpha を 1024 (無効) 付近に上げること。
+      未指定時は従来通り蓄積する (後方互換)。
   iir-filter-alpha:
     type: int
     default: 614

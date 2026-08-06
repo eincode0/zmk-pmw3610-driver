@@ -1209,19 +1209,24 @@ static int pmw3610_report_data(const struct device *dev) {
         data->pointer_flick_idx = (data->pointer_flick_idx + 1) & 3;
     }
 
-    /* 2-sample accumulation: HID レポート頻度を 62.5Hz に抑えて BLE 圧迫を防止 */
-    int64_t curr_time = k_uptime_get();
-    if (data->last_poll_time == 0 || curr_time - data->last_poll_time > 128) {
-        data->last_poll_time = curr_time;
-        data->last_x = x;
-        data->last_y = y;
-        return 0;
-    } else {
-        x += data->last_x;
-        y += data->last_y;
-        data->last_poll_time = 0;
-        data->last_x = 0;
-        data->last_y = 0;
+    /* 2-sample accumulation: HID レポート頻度を 62.5Hz に抑えて BLE 圧迫を防止。
+     * 250Hz ポーリング (Kconfig 既定) を 125Hz レポートへ落とすために書かれた処理で、
+     * POLLING_RATE_125 と併用すると 62.5Hz まで二重に半減する。
+     * no-sample-accumulation でスキップ可能 (既定は従来通り蓄積する)。 */
+    if (!config->no_sample_accumulation) {
+        int64_t curr_time = k_uptime_get();
+        if (data->last_poll_time == 0 || curr_time - data->last_poll_time > 128) {
+            data->last_poll_time = curr_time;
+            data->last_x = x;
+            data->last_y = y;
+            return 0;
+        } else {
+            x += data->last_x;
+            y += data->last_y;
+            data->last_poll_time = 0;
+            data->last_x = 0;
+            data->last_y = 0;
+        }
     }
 
     /* ======================================================
@@ -1535,6 +1540,7 @@ static const struct sensor_driver_api pmw3610_driver_api = {
         .pointer_inertia_tick_ms   = DT_PROP_OR(DT_DRV_INST(n), pointer_inertia_tick_ms, 16), \
         .pointer_flick_threshold   = DT_PROP_OR(DT_DRV_INST(n), pointer_flick_threshold, 8),  \
         .pointer_flick_boost       = DT_PROP_OR(DT_DRV_INST(n), pointer_flick_boost, 512),    \
+        .no_sample_accumulation    = DT_PROP(DT_DRV_INST(n), no_sample_accumulation),         \
         .iir_filter_alpha          = DT_PROP_OR(DT_DRV_INST(n), iir_filter_alpha, 614),       \
         .speed_based_cpi           = DT_PROP_OR(DT_DRV_INST(n), speed_based_cpi, 0),          \
         .speed_cpi_low_threshold   = DT_PROP_OR(DT_DRV_INST(n), speed_cpi_low_threshold, 5),  \
